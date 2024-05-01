@@ -10,8 +10,9 @@ includelib \masm32\lib\masm32.lib
 
 
 .data
-    ok_msg db "Processo concluido com sucesso", 0AH, 0H
-    fail_msg db "Ocorreu um erro interno", 0AH, 0H
+    opt1_succeed db "Criptografia realizada com sucesso!", 0AH, 0H
+    opt2_succeed db "Descriptografia realizada com sucesso!", 0AH, 0H
+    opt3_succeed db "Fechando programa", 0AH, 0H
 
     str_title db "--------- Cifra de Transposicao ---------", 0AH, 0AH, 0H
 
@@ -29,6 +30,7 @@ includelib \masm32\lib\masm32.lib
     console_count dd 0
 
     ;PARAMETROS DO ARQUIVO
+    buffer_key dd 0
     file_handle dd 0
     out_file_handle dd 0
     
@@ -38,7 +40,10 @@ includelib \masm32\lib\masm32.lib
 ;PARA UM VALOR NUMERICO, RETORNO EM (EAX)
 
 RemoveCR:
-    mov esi, offset input_buffer
+    push ebp
+    mov ebp, esp
+
+    mov esi, [ebp+8]
     proximo:
         mov al, [esi]
         inc esi
@@ -46,9 +51,16 @@ RemoveCR:
         jne proximo
         dec esi
         xor al, al
-        mov [esi], al   
-ret
+        mov [esi], al
+        
+    pop ebp
+ret 4
 
+
+;FUNÇÃO PARA LIMPA BUFFER DA CHAVE
+CleanBuffer:
+
+ret
 
 ;MOSTRA O MENU DO PROGRAMA
 
@@ -58,7 +70,9 @@ Menu:
     invoke WriteConsole, output_handle, addr str_prompt, sizeof str_prompt, addr console_count, NULL
     invoke ReadConsole, input_handle, addr input_buffer, sizeof input_buffer, addr console_count, NULL
     
+    push offset input_buffer
     call RemoveCR
+    
     invoke CreateFile, addr input_buffer, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
     mov file_handle, eax
 
@@ -66,6 +80,7 @@ Menu:
     invoke WriteConsole, output_handle, addr str_prompt, sizeof str_prompt, addr console_count, NULL
     invoke ReadConsole, input_handle, addr input_buffer, sizeof input_buffer, addr console_count, NULL
 
+    push offset input_buffer
     call RemoveCR
     invoke CreateFile, addr input_buffer, GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
     mov out_file_handle, eax
@@ -74,6 +89,7 @@ Menu:
     invoke WriteConsole, output_handle, addr str_prompt, sizeof str_prompt, addr console_count, NULL
     invoke ReadConsole, input_handle, addr input_buffer, sizeof input_buffer, addr console_count, NULL
 
+    push offset input_buffer
     call RemoveCR
     invoke atodw, addr input_buffer
 
@@ -81,6 +97,7 @@ Menu:
     invoke WriteConsole, output_handle, addr str_prompt, sizeof str_prompt, addr console_count, NULL
     invoke ReadConsole, input_handle, addr input_buffer, sizeof input_buffer, addr console_count, NULL
 
+    push offset input_buffer
     call RemoveCR
     invoke atodw, addr input_buffer
 ret
@@ -101,6 +118,6 @@ start:
         
     jne mostrar_menu
 
-    invoke WriteConsole, output_handle, addr ok_msg, sizeof ok_msg, addr console_count, NULL
+    invoke WriteConsole, output_handle, addr opt3_succeed, sizeof opt3_succeed, addr console_count, NULL
     invoke ExitProcess, 0
 end start
