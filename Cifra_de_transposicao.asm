@@ -58,9 +58,30 @@ ret 4
 
 
 ;FUN플O PARA LIMPA BUFFER DA CHAVE
-CleanBuffer:
+CleanKeyBuffer:
+   push ebp
+   mov ebp, esp
+
+   
+
+   pop ebp 
+ret 4
+
+;FUN플O PARA TRATAR A CHAVE
+Getkey:
 
 ret
+
+;FUN플O PARA CIFRAR
+Cipher:
+
+ret
+
+;FUN플O PARA DESCIFRAR
+Decipher:
+
+ret
+
 
 ;MOSTRA O MENU DO PROGRAMA
 
