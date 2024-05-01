@@ -74,18 +74,18 @@ ret
 
 ;FUNÇÃO PARA CIFRAR
 Cipher:
-
+    
 ret
 
 ;FUNÇÃO PARA DESCIFRAR
 Decipher:
-
+    
 ret
 
 
-;MOSTRA O MENU DO PROGRAMA
 
-Menu:
+;SOLICITA O ARQUIVO DE ENTRADA E SALVA SEU APONTADOR NA VARIAVEL FILE_HANDLE
+RequestInputFile:
     invoke WriteConsole, output_handle, addr str_title, sizeof str_title, addr console_count, NULL
     invoke WriteConsole, output_handle, addr str_request_1, sizeof str_request_1, addr console_count, NULL
     invoke WriteConsole, output_handle, addr str_prompt, sizeof str_prompt, addr console_count, NULL
@@ -93,10 +93,14 @@ Menu:
     
     push offset input_buffer
     call RemoveCR
-    
     invoke CreateFile, addr input_buffer, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
     mov file_handle, eax
+ret
 
+
+
+;SOLICITA O ARQUIVO DE SAIDA E SALVA SEU APONTADOR NA VARIAVEL OUT_FILE_HANDLE
+RequestOutputFile:
     invoke WriteConsole, output_handle, addr str_request_2, sizeof str_request_2, addr console_count, NULL
     invoke WriteConsole, output_handle, addr str_prompt, sizeof str_prompt, addr console_count, NULL
     invoke ReadConsole, input_handle, addr input_buffer, sizeof input_buffer, addr console_count, NULL
@@ -105,7 +109,12 @@ Menu:
     call RemoveCR
     invoke CreateFile, addr input_buffer, GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
     mov out_file_handle, eax
+ret
 
+
+
+;SOLICITA A CHAVE PARA CRIPTOGRAFIA
+RequestKey:
     invoke WriteConsole, output_handle, addr str_request_3, sizeof str_request_3, addr console_count, NULL
     invoke WriteConsole, output_handle, addr str_prompt, sizeof str_prompt, addr console_count, NULL
     invoke ReadConsole, input_handle, addr input_buffer, sizeof input_buffer, addr console_count, NULL
@@ -113,7 +122,13 @@ Menu:
     push offset input_buffer
     call RemoveCR
     invoke atodw, addr input_buffer
+    mov buffer_key, eax
+ret
 
+
+
+;SOLICITA QUE O USUARIO ESCOLHA UMA OPÇÃO
+ShowOptions:
     invoke WriteConsole, output_handle, addr str_options, sizeof str_options, addr console_count, NULL
     invoke WriteConsole, output_handle, addr str_prompt, sizeof str_prompt, addr console_count, NULL
     invoke ReadConsole, input_handle, addr input_buffer, sizeof input_buffer, addr console_count, NULL
@@ -121,6 +136,28 @@ Menu:
     push offset input_buffer
     call RemoveCR
     invoke atodw, addr input_buffer
+ret
+
+;MOSTRA O MENU DO PROGRAMA
+Menu:
+    call RequestInputFile
+    call RequestOutputFile
+    call RequestKey
+    call ShowOptions
+        
+    cmp eax, 1
+        je case_1
+    cmp eax, 2
+        je case_2
+
+    jmp end_case
+        case_1:
+            call Cipher
+            jmp end_case
+        case_2:
+            call Decipher
+            jmp end_case
+    end_case:
 ret
 
 
@@ -132,12 +169,7 @@ start:
     invoke GetStdHandle, STD_OUTPUT_HANDLE
     mov output_handle, eax
 
-    mostrar_menu:
-    
-        call Menu
-        cmp eax, 0
-        
-    jne mostrar_menu
+    call Menu
 
     invoke WriteConsole, output_handle, addr opt3_succeed, sizeof opt3_succeed, addr console_count, NULL
     invoke ExitProcess, 0
