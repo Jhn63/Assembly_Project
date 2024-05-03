@@ -12,6 +12,15 @@ include \masm32\include\msvcrt.inc
 includelib \masm32\lib\msvcrt.lib
 include \masm32\macros\macros.asm
 
+;***********************************************************************
+;| PROJETO DA DISCIPLINA ARQUITETURA DE COMPUTADORES 1 - UFPB - 2024.1 |
+;|*********************************************************************|
+;| DESENVOLVIDO PELOS ALUNOS:                                          |
+;|   LEANDESON PINHEIRO SANTOS DE ARAUJO - 20230144958                 |
+;|   JOÃO VITOR TEIXERA BARRETO - 20210094349                          |
+;|   KAUA PEREIRA VIANA - 20230089631                                  |
+;***********************************************************************
+
 
 .data
     opt1_succeed db "Criptografia realizada com sucesso!", 0AH, 0H
@@ -23,7 +32,7 @@ include \masm32\macros\macros.asm
     str_request_3 db "Entre a chave de transposicao", 0AH, 0H  
     str_request_2 db "Entre o caminho do arquivo de saida", 0AH, 0H
     str_request_1 db "Entre o caminho do arquivo de entrada", 0AH, 0H
-    str_options   db "[1]Criptografar [2]Descriptografar [0]Sair", 0AH, 0H
+    str_options   db "[1]Criptografar [2]Descriptografar", 0AH, 0H
     str_prompt    db ">> ", 0H
 
     key_numeric dd 8 dup(0)             ;array para receber os digitos da chave
@@ -91,25 +100,19 @@ RemoveCR:
         pop ebp
 ret 4
 
-;FUNÇÃO PARA CARREGAR BUFFER DO ARQUIVO DE ENTRADA 
-LoadFileBuffer:
+CleanFileBuffer:
     push ebp
     mov ebp, esp
-    mov esi, [ebp+8] ; ARQ DE ENTRADA 
-    
-    invoke ReadFile, esi, addr input_file_buffer, 8, addr count_read, NULL
+    mov esi, [ebp+8]
+
+   xor ebx, ebx
+    limpar: 
+        mov byte ptr[esi + 1 * ebx], 0
+        inc ebx
+        cmp ebx, 8
+        jne limpar
+
     pop ebp
-ret 4
-
-
-;FUNÇÃO PARA DECARREGAR CONTEUDO DO BUFFER DO ARQUIVO DE SAIDA
-UnloadFileBuffer:
-   push ebp
-   mov ebp, esp
-   mov esi, [ebp+8] ;ARQ DE SAIDA
-
-   invoke WriteFile, esi, addr output_file_buffer, 8, addr count_write, NULL ;;;;;outfile olhar
-   pop ebp
 ret 4
 
 
@@ -119,32 +122,32 @@ Cipher:
     mov ebp, esp
 
     cifrar:
-        invoke ReadFile, input_file_handle, addr input_file_buffer, 8, addr count_read, NULL
-        cmp count_read, 0
-        je fim_cifrar   
+        ;LIMPAR BUFFER DE ENTRADA
+        push offset input_file_buffer
+        call CleanFileBuffer
+        
+        invoke ReadFile, input_file_handle, addr input_file_buffer, 8, addr count_read, NULL        ;PREENCHE O BUFFER DE ENTRADA COM DADOS DO ARQUIVO DE ENTRADA
+        
+        cmp count_read, 0                                                                           ;SE O CONTADOR ESTIVER EM 0 CHEGAMOS AO FIM DO ARQUIVO
+            je fim_cifrar                                                                           ;PARA CIFRAGEM
 
-        mov esi, offset input_file_buffer
-        mov edi, offset output_file_buffer
-
-        xor al, al
-        xor ecx, ecx
-        xor ebx, ebx
-    
-        repetir:
-            mov ebx, [key_numeric + ecx * 4]
- 
-  
-            mov al, [esi + ecx]        
-            mov byte ptr[edi + 1 * ebx], al
+        mov esi, offset input_file_buffer                   ;ESI APONTA PARA BUFFER DO ARQ DE ENTADA
+        mov edi, offset output_file_buffer                  ;EDI APONTA PARA BUFFER DO ARQ DE SAIDA
+        xor ecx, ecx                                        ;ZERANDO CONTADOR
+        
+        repetir:                                            ;LAÇO PARA PREENCHER O BUFFER DE SAIDA
+            mov ebx, [key_numeric + ecx * 4]                ;EBX RECEBE UM DIGITO DA CHAVE
+            mov al, [esi + ecx]                             ;AL RECBE UM CARACTER DO BUFFER DE ENTRADA
+            mov byte ptr[edi + 1 * ebx], al                 ;MOVE O CARACTER EM AL PARA O BUFFER DE SAIDA (BUFFER[EBX] = AL)
 
             inc ecx
             cmp ecx, 8
-            jne repetir
+        jne repetir
 
-        invoke WriteFile, output_file_handle, addr output_file_buffer, 8, addr count_write, NULL
-        jmp cifrar
+        invoke WriteFile, output_file_handle, addr output_file_buffer, 8, addr count_write, NULL    ;DESCARREGA O BUFFER DE SAIDA NO ARQUIVO DE SAIDA
+
+    jmp cifrar
     fim_cifrar:
-
     pop ebp
 ret
 
@@ -152,8 +155,37 @@ ret
 ;FUNÇÃO PARA DESCIFRAR
 
 Decipher:
-    
+    push ebp
+    mov ebp, esp
 
+    decifrar:
+        ;LIMPAR BUFFER DE ENTRADA
+        push offset input_file_buffer
+        call CleanFileBuffer
+        
+        invoke ReadFile, input_file_handle, addr input_file_buffer, 8, addr count_read, NULL        ;PREENCHE O BUFFER DE ENTRADA COM DADOS DO ARQUIVO DE ENTRADA
+        
+        cmp count_read, 0                                                                           ;SE O CONTADOR ESTIVER EM 0 CHEGAMOS AO FIM DO ARQUIVO
+            je fim_decifrar                                                                         ;PARA CIFRAGEM
+
+        mov esi, offset input_file_buffer                   ;ESI APONTA PARA BUFFER DO ARQ DE ENTADA
+        mov edi, offset output_file_buffer                  ;EDI APONTA PARA BUFFER DO ARQ DE SAIDA
+        xor ecx, ecx                                        ;ZERANDO CONTADOR
+        
+        repete:                                             ;LAÇO PARA PREENCHER O BUFFER DE SAIDA
+            mov ebx, [key_numeric + ecx * 4]                ;EBX RECEBE UM DIGITO DA CHAVE
+            mov al, [esi + 1 * ebx]                             ;AL RECBE UM CARACTER DO BUFFER DE ENTRADA
+            mov byte ptr[edi + ecx], al                 ;MOVE O CARACTER EM AL PARA O BUFFER DE SAIDA (BUFFER[EBX] = AL)
+
+            inc ecx
+            cmp ecx, 8
+        jne repete
+
+        invoke WriteFile, output_file_handle, addr output_file_buffer, 8, addr count_write, NULL    ;DESCARREGA O BUFFER DE SAIDA NO ARQUIVO DE SAIDA
+
+    jmp decifrar
+    fim_decifrar:
+    pop ebp
 ret
 
 
@@ -238,9 +270,7 @@ Menu:
 
     jmp end_case
         case_1:
-
-            ;push output_file_handle
-            ;push input_file_handle   
+  
             call Cipher   
 
             jmp end_case
