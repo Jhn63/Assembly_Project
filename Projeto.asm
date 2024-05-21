@@ -9,7 +9,7 @@ includelib \masm32\lib\kernel32.lib
 includelib \masm32\lib\masm32.lib
 
 ;***********************************************************************
-;| PROJETO DA DISCIPLINA ARQUITETURA DE COMPUTADORES 1 - UFPB - 2024.1 |
+;| PROJETO DA DISCIPLINA ARQUITETURA DE COMPUTADORES 1 - UFPB - 2023.2 |
 ;|*********************************************************************|
 ;| DESENVOLVIDO PELOS ALUNOS:                                          |
 ;|   LEANDESON PINHEIRO SANTOS DE ARAUJO - 20230144958                 |
