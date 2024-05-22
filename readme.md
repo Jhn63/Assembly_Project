@@ -19,7 +19,7 @@ Since this is a low-level language there are some things you should know in orde
 
 - CPU must have the Intel set of instructions (that means Intel and AMD processors)
 - The Operational System must be Windows
-- Your OS may think the program is malware, in this case, add it to your system exceptions
+- Your OS may think the program is malware, in this case, add it to your system's exceptions
 - The Program will not check for invalid inputs; you can easily break it
 
 Also, use the MAMS32 editor to rebuild
